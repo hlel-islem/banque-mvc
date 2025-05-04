@@ -1,84 +1,71 @@
 package com.fst.banque.controlers;
 
+import com.fst.banque.entities.compte;
+import com.fst.banque.repositories.CompteRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import com.fst.banque.entities.compte;
-import static com.fst.banque.BanqueApplication.comptes; 
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class banquecontrolers {
-	private List<compte> comptes = new ArrayList<>();
-	public banquecontrolers (){
-		comptes.add(new compte(1,"Islem", 1650));  
-        comptes.add(new compte(2,"Eya", 1800));
-        comptes.add(new compte(3,"Amine", 1530));
-	}
 	
-	
-	
-	@GetMapping("/comptes")
+    @Autowired
+    private CompteRepository compteRepository;
+
+    @GetMapping("/comptes")
     public String listeComptes(Model model) {
-        model.addAttribute("comptes", comptes);
+        model.addAttribute("comptes", compteRepository.findAll());
         return "listeComptes";
     }
 
-	@GetMapping("/ajouter")
+    @GetMapping("/ajouter")
     public String formAjout(Model model) {
         model.addAttribute("compte", new compte());
         return "ajouterCompte";
     }
-    
 
-	@PostMapping("/ajouter")
+    @PostMapping("/ajouter")
     public String ajouter(@RequestParam String titulaire, @RequestParam double solde) {
-        int id = comptes.size() + 1;
-        compte c = new compte(id, titulaire, solde);
-        c.setId(id);
-        comptes.add(c);
+        compte c = new compte();
+        c.setTitulaire(titulaire);
+        c.setSolde(solde);
+        compteRepository.save(c);
         return "redirect:/comptes";
     }
 
-	@GetMapping("/details/{id}")
+    @GetMapping("/details/{id}")
     public String details(@PathVariable int id, Model model) {
-        for (compte c : comptes) {
-            if (c.getId() == id) {
-                model.addAttribute("compte", c);
-                break;
-            }
-        }
+        Optional<compte> optionalCompte = compteRepository.findById(id);
+        optionalCompte.ifPresent(c -> model.addAttribute("compte", c));
         return "detailsCompte";
     }
 
-	@PostMapping("/depot/{id}")
+    @PostMapping("/depot/{id}")
     public String depot(@PathVariable int id, @RequestParam double montant) {
-        for (compte c : comptes) {
-        	 if (c.getId() == id && montant > 0) {
-                c.setSolde(c.getSolde() + montant);
-                break;
-            }
+        Optional<compte> optionalCompte = compteRepository.findById(id);
+        if (optionalCompte.isPresent() && montant > 0) {
+            compte c = optionalCompte.get();
+            c.setSolde(c.getSolde() + montant);
+            compteRepository.save(c);
         }
         return "redirect:/details/" + id;
     }
 
-	 @PostMapping("/retrait/{id}")
-	    public String retrait(@PathVariable int id, @RequestParam double montant) {
-	        for (compte c : comptes) {
-	        	  if (c.getId() == id && montant > 0 && c.getSolde() >= montant)  {
-	                c.setSolde(c.getSolde() - montant);
-	                break;
-	            }
-	        }
-	        return "redirect:/details/" + id;
-	    }
-
-	 
+    @PostMapping("/retrait/{id}")
+    public String retrait(@PathVariable int id, @RequestParam double montant) {
+        Optional<compte> optionalCompte = compteRepository.findById(id);
+        if (optionalCompte.isPresent()) {
+            compte c = optionalCompte.get();
+            if (montant > 0 && c.getSolde() >= montant) {
+                c.setSolde(c.getSolde() - montant);
+                compteRepository.save(c);
+            }
+        }
+        return "redirect:/details/" + id;
+    }
 }
