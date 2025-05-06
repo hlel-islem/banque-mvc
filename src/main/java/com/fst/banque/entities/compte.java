@@ -46,7 +46,4 @@ public class compte {
     public void setSolde(double solde) {
         this.solde = solde;
     }
-   
-		
-	}
-
+}
