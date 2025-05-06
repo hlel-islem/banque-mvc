@@ -2,13 +2,11 @@ package com.fst.banque.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -17,43 +15,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/static/**").permitAll()
-                .requestMatchers("/comptes/**", "/ajouter/**", "/details/**", "/depot/**", "/retrait/**").authenticated()
-                .anyRequest().denyAll()
+            .authorizeRequests(auth -> auth
+                .requestMatchers("/login", "/register", "/css/**").permitAll() // Connexion, inscription et ressources statiques
+                .requestMatchers("/comptes/**", "/ajouter/**", "/details/**").authenticated() // Pages pour utilisateurs authentifiés
+                .requestMatchers("/depot/**", "/retrait/**").hasAuthority("ROLE_ADMIN") // Seulement l'admin peut déposer ou retirer
+                .anyRequest().denyAll() // Autres pages interdites
             )
             .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/comptes", true)
-                .permitAll()
+                .loginPage("/login") // Page de login personnalisée
+                .defaultSuccessUrl("/comptes", true) // Redirection après connexion réussie
+                .permitAll() // Permet l'accès à la page de connexion
             )
             .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout")
-                .permitAll()
+                .logoutSuccessUrl("/login?logout") // Redirection après déconnexion
+                .permitAll() // Permet l'accès à la déconnexion
             )
-            .csrf().disable(); 
+            .csrf().disable(); // Désactiver CSRF pour simplification (à revoir en production)
 
         return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(encoder.encode("admin123"))
-                .roles("ADMIN")
-                .build();
-
-        UserDetails user = User.withUsername("user")
-                .password(encoder.encode("user123"))
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin, user);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(); // Utilisation de BCrypt pour encoder les mots de passe
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager(); // Gestionnaire d'authentification
     }
 }
+

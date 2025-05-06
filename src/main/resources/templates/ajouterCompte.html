@@ -11,22 +11,28 @@
 </head>
 <body class="container mt-5">
 
-    <h1 class="text-center mb-4">Ajouter un Compte</h1>
+<h1 class="text-center mb-4">Ajouter un Compte</h1>
 
-    <form th:action="@{/ajouter}" method="post" th:object="${compte}" class="needs-validation" novalidate>
-        <div class="mb-3">
-            <label for="titulaire" class="form-label">Titulaire</label>
-            <input type="text" id="titulaire" th:field="*{titulaire}" class="form-control" required>
-        </div>
+<form th:action="@{/ajouter}" method="post" th:object="${compte}" class="needs-validation" novalidate>
+    <div class="mb-3">
+        <label for="titulaire" class="form-label">Titulaire</label>
+        <input type="text" id="titulaire" th:field="*{titulaire}" class="form-control" required>
+    </div>
 
-        <div class="mb-3">
-            <label for="solde" class="form-label">Solde initial</label>
-            <input type="number" step="0.01" id="solde" th:field="*{solde}" class="form-control" required>
-        </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Adresse Email</label>
+        <input type="email" id="email" th:field="*{email}" class="form-control" required>
+    </div>
 
-        <button type="submit" class="btn btn-success">Créer</button>
-        <a th:href="@{/comptes}" class="btn btn-secondary ms-2">Retour à la liste</a>
-    </form>
+    <div class="mb-3">
+        <label for="solde" class="form-label">Solde initial</label>
+        <input type="number" step="0.01" id="solde" th:field="*{solde}" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn btn-success">Créer</button>
+    <a th:href="@{/comptes}" class="btn btn-secondary ms-2">Retour à la liste</a>
+</form>
 
 </body>
 </html>
+
